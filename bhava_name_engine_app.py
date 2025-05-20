@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import json
@@ -58,6 +57,7 @@ st.sidebar.title("🔍 Glossary Filters")
 selected_chakras = st.sidebar.multiselect("Select Chakra(s)", all_chakras, default=[])
 selected_rasas = st.sidebar.multiselect("Select Rasa(s)", all_rasas, default=[])
 selected_bhavas = st.sidebar.multiselect("Select Bhāva(s)", all_bhavas, default=[])
+name_query = st.sidebar.text_input("Search by Name")
 filter_scripture_only = st.sidebar.checkbox("📖 Only Bhāvas with Scripture")
 show_references = st.sidebar.checkbox("📿 Show Chakra–Deity–Mantra References")
 
@@ -106,6 +106,7 @@ with tab3:
         if (not selected_chakras or data["chakra"] in selected_chakras) and
            (not selected_rasas or data["rasa"] in selected_rasas) and
            (not selected_bhavas or bhava in selected_bhavas) and
+           (not name_query or is_fuzzy_match(name_query, bhava)) and
            (not filter_scripture_only or ("scripture_quote" in data and data["scripture_quote"]))
     ]
 
@@ -114,12 +115,12 @@ with tab3:
     st.image(sparkline_buf, use_container_width=True)
 
     for bhava, data in filtered_results:
-        st.markdown(f"""
+        st.markdown(f\"\"\"
         ### 🪷 {bhava}
         - **Meaning**: {data["meaning"]}
         - **Chakra**: {data["chakra"]}
         - **Rasa**: {data["rasa"]}
-        """)
+        \"\"\")
         if "scripture_quote" in data:
             with st.expander("📖 View Scripture Details"):
                 st.markdown(f"**Sanskrit:** {data['scripture_quote']}")
