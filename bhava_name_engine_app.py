@@ -115,7 +115,7 @@ with tab3:
     st.image(sparkline_buf, use_container_width=True)
 
     for bhava, data in filtered_results:
-        st.markdown(f\"\"\"
+        st.markdown(f"""
         ### 🪷 {bhava}
         - **Meaning**: {data["meaning"]}
         - **Chakra**: {data["chakra"]}
