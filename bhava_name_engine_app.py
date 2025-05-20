@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import json
@@ -115,12 +116,12 @@ with tab3:
     st.image(sparkline_buf, use_container_width=True)
 
     for bhava, data in filtered_results:
-        st.markdown(f"""
+        st.markdown(f'''
         ### 🪷 {bhava}
         - **Meaning**: {data["meaning"]}
         - **Chakra**: {data["chakra"]}
         - **Rasa**: {data["rasa"]}
-        \"\"\")
+        ''')
         if "scripture_quote" in data:
             with st.expander("📖 View Scripture Details"):
                 st.markdown(f"**Sanskrit:** {data['scripture_quote']}")
