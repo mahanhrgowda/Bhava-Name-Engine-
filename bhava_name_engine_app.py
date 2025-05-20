@@ -1,9 +1,17 @@
 
 import streamlit as st
+import pandas as pd
 import json
+import matplotlib.pyplot as plt
+from io import BytesIO
+from fuzzywuzzy import fuzz
+from bhava_guesser import guess_bhava_tags
+from bhava_card_export import get_card_png_bytes
+from bhava_csv_batch_processor import process_csv
 from chakra_rasa_filters import get_selected_filters
 from chakra_bhava_deity_mantra_map import get_chakra_deity_map
-from fuzzywuzzy import fuzz
+
+st.set_page_config(page_title="Bhāva Name Engine", page_icon="🕉", layout="centered")
 
 @st.cache_data
 def load_glossary():
@@ -14,34 +22,74 @@ def load_glossary():
         if isinstance(v, dict) and all(x in v for x in ["chakra", "rasa", "meaning"])
     }
 
-glossary = load_glossary()
-
 def is_fuzzy_match(query, target, threshold=60):
     if not query or not target:
         return False
     return fuzz.partial_ratio(query.lower(), target.lower()) >= threshold
 
-st.sidebar.title("🔍 Filter Bhāvas")
+def generate_chakra_sparkline(bhava_entries):
+    chakra_counts = {}
+    for bhava, data in bhava_entries:
+        chakra = data["chakra"]
+        chakra_counts[chakra] = chakra_counts.get(chakra, 0) + 1
+
+    chakras_ordered = ["Mūlādhāra", "Svādhiṣṭhāna", "Maṇipūra", "Anāhata", "Viśuddha", "Ājñā", "Sahasrāra"]
+    counts = [chakra_counts.get(c, 0) for c in chakras_ordered]
+
+    fig, ax = plt.subplots(figsize=(6, 1.5))
+    ax.bar(chakras_ordered, counts, color='skyblue')
+    ax.set_xticklabels(chakras_ordered, rotation=45, ha='right')
+    ax.set_yticks([])
+    ax.set_title("Bhāva Distribution by Chakra", fontsize=10)
+
+    buf = BytesIO()
+    plt.tight_layout()
+    plt.savefig(buf, format="png")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+glossary = load_glossary()
+
+chakra_emoji = {
+    "Mūlādhāra": "🔴", "Svādhiṣṭhāna": "🟠", "Maṇipūra": "🟡",
+    "Anāhata": "💚", "Viśuddha": "🔵", "Ājñā": "🟣", "Sahasrāra": "⚪"
+}
+rasa_emoji = {
+    "Śṛṅgāra": "❤️", "Hāsya": "😂", "Karuṇa": "😢", "Raudra": "😠",
+    "Vīra": "⚔️", "Bhayānaka": "😱", "Bībhatsa": "🤢", "Adbhuta": "✨", "Śānta": "🕊️"
+}
+
+st.sidebar.title("🔍 Glossary Filters")
 selected_chakras, selected_rasas = get_selected_filters()
 search_query = st.sidebar.text_input("Search Bhāva, Meaning, Chakra, or Rasa")
+filter_scripture_only = st.sidebar.checkbox("📖 Only Bhāvas with Scripture")
+show_references = st.sidebar.checkbox("📿 Show Chakra–Deity–Mantra References")
 
-filtered_results = [
-    (bhava, data) for bhava, data in glossary.items()
-    if data["chakra"] in selected_chakras and
-       data["rasa"] in selected_rasas and (
-           is_fuzzy_match(search_query, bhava) or
-           is_fuzzy_match(search_query, data["meaning"]) or
-           is_fuzzy_match(search_query, data["chakra"]) or
-           is_fuzzy_match(search_query, data["rasa"])
-       )
-]
+st.title("🌸 Bhāva Name Engine")
 
-st.title("🌸 Bhāva Name Engine Glossary")
-st.markdown(f"**Results: {len(filtered_results)} matching entries**")
+tab1, tab2, tab3 = st.tabs(["🧑‍🎤 Single Name Tagger", "📁 Batch CSV Upload", "📚 Bhāva Glossary"])
 
-if not filtered_results:
-    st.warning("No matching Bhāvas found.")
-else:
+with tab3:
+    st.subheader("📚 Filtered Bhāva Glossary")
+    filtered_results = [
+        (bhava, data) for bhava, data in glossary.items()
+        if data["chakra"] in selected_chakras and
+           data["rasa"] in selected_rasas and (
+               is_fuzzy_match(search_query, bhava) or
+               is_fuzzy_match(search_query, data["meaning"]) or
+               is_fuzzy_match(search_query, data["chakra"]) or
+               is_fuzzy_match(search_query, data["rasa"])
+           ) and (
+               not filter_scripture_only or ("scripture_quote" in data and data["scripture_quote"])
+           )
+    ]
+
+    st.markdown(f"**{len(filtered_results)} results found**")
+
+    sparkline_buf = generate_chakra_sparkline(filtered_results)
+    st.image(sparkline_buf, use_column_width=True)
+
     for bhava, data in filtered_results:
         st.markdown(f"""
         ### 🪷 {bhava}
@@ -50,11 +98,8 @@ else:
         - **Rasa**: {data["rasa"]}
         """)
 
-if st.checkbox("Show Chakra–Deity–Mantra References"):
-    chakra_map = get_chakra_deity_map()
-    for chakra, ref in chakra_map.items():
-        st.markdown(f"""
-        #### 🔘 {chakra}
-        - **Deity**: {ref['deity']}
-        - **Mantra**: `{ref['mantra']}`
-        """)
+        if "scripture_quote" in data:
+            with st.expander("📖 View Scripture Details"):
+                st.markdown(f"**Sanskrit:** {data['scripture_quote']}")
+                st.markdown(f"**Translation:** {data['scripture_translation']}")
+                st.markdown(f"**Source:** _{data['scripture_source']}_")
