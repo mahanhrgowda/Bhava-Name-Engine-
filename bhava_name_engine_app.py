@@ -8,7 +8,6 @@ from fuzzywuzzy import fuzz
 from bhava_guesser import guess_bhava_tags
 from bhava_card_export import get_card_png_bytes
 from bhava_csv_batch_processor import process_csv
-from chakra_rasa_filters import get_selected_filters
 from chakra_bhava_deity_mantra_map import get_chakra_deity_map
 
 st.set_page_config(page_title="Bhāva Name Engine", page_icon="🕉", layout="centered")
@@ -50,19 +49,15 @@ def generate_chakra_sparkline(bhava_entries):
     return buf
 
 glossary = load_glossary()
+all_chakras = sorted(list({v["chakra"] for v in glossary.values()}))
+all_rasas = sorted(list({v["rasa"] for v in glossary.values()}))
+all_bhavas = sorted(glossary.keys())
 
-chakra_emoji = {
-    "Mūlādhāra": "🔴", "Svādhiṣṭhāna": "🟠", "Maṇipūra": "🟡",
-    "Anāhata": "💚", "Viśuddha": "🔵", "Ājñā": "🟣", "Sahasrāra": "⚪"
-}
-rasa_emoji = {
-    "Śṛṅgāra": "❤️", "Hāsya": "😂", "Karuṇa": "😢", "Raudra": "😠",
-    "Vīra": "⚔️", "Bhayānaka": "😱", "Bībhatsa": "🤢", "Adbhuta": "✨", "Śānta": "🕊️"
-}
-
+# Sidebar Filters
 st.sidebar.title("🔍 Glossary Filters")
-selected_chakras, selected_rasas = get_selected_filters()
-search_query = st.sidebar.text_input("Search Bhāva, Meaning, Chakra, or Rasa")
+selected_chakras = st.sidebar.multiselect("Select Chakra(s)", all_chakras, default=[])
+selected_rasas = st.sidebar.multiselect("Select Rasa(s)", all_rasas, default=[])
+selected_bhavas = st.sidebar.multiselect("Select Bhāva(s)", all_bhavas, default=[])
 filter_scripture_only = st.sidebar.checkbox("📖 Only Bhāvas with Scripture")
 show_references = st.sidebar.checkbox("📿 Show Chakra–Deity–Mantra References")
 
@@ -70,25 +65,53 @@ st.title("🌸 Bhāva Name Engine")
 
 tab1, tab2, tab3 = st.tabs(["🧑‍🎤 Single Name Tagger", "📁 Batch CSV Upload", "📚 Bhāva Glossary"])
 
+with tab1:
+    st.subheader("🔤 Enter a Name")
+    name_input = st.text_input("Name:")
+    if name_input:
+        tags = guess_bhava_tags(name_input)
+        if tags:
+            st.success("✨ Bhāva Tags:")
+            for bhava, chakra, rasa, color in tags:
+                st.markdown(
+                    f"<div style='padding:10px;margin:5px;border-radius:10px;background:{color};color:white;"
+                    f"box-shadow: 0 0 12px {color}; font-size: 16px;'>"
+                    f"<b>{chakra}</b> • {bhava} • <i>{rasa}</i></div>",
+                    unsafe_allow_html=True
+                )
+            png_data = get_card_png_bytes(name_input, tags)
+            st.download_button("📥 Download Bhāva Card (PNG)", data=png_data, file_name=f"{name_input}_bhava_card.png", mime="image/png")
+        else:
+            st.warning("No Bhāva tags could be confidently inferred.")
+
+with tab2:
+    st.subheader("📂 Upload CSV with Name Column")
+    uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+    if uploaded_file:
+        with st.spinner("Processing CSV..."):
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                temp_file.write(uploaded_file.read())
+                temp_file.flush()
+                df_out = process_csv(temp_file.name)
+        st.success("✅ Bhāva Tags Processed")
+        st.dataframe(df_out)
+        csv = df_out.to_csv(index=False).encode("utf-8")
+        st.download_button("📥 Download Tagged CSV", data=csv, file_name="Bhava_Tagged_Names.csv", mime="text/csv")
+
 with tab3:
     st.subheader("📚 Filtered Bhāva Glossary")
     filtered_results = [
         (bhava, data) for bhava, data in glossary.items()
-        if data["chakra"] in selected_chakras and
-           data["rasa"] in selected_rasas and (
-               is_fuzzy_match(search_query, bhava) or
-               is_fuzzy_match(search_query, data["meaning"]) or
-               is_fuzzy_match(search_query, data["chakra"]) or
-               is_fuzzy_match(search_query, data["rasa"])
-           ) and (
-               not filter_scripture_only or ("scripture_quote" in data and data["scripture_quote"])
-           )
+        if (not selected_chakras or data["chakra"] in selected_chakras) and
+           (not selected_rasas or data["rasa"] in selected_rasas) and
+           (not selected_bhavas or bhava in selected_bhavas) and
+           (not filter_scripture_only or ("scripture_quote" in data and data["scripture_quote"]))
     ]
 
     st.markdown(f"**{len(filtered_results)} results found**")
-
     sparkline_buf = generate_chakra_sparkline(filtered_results)
-    st.image(sparkline_buf, use_column_width=True)
+    st.image(sparkline_buf, use_container_width=True)
 
     for bhava, data in filtered_results:
         st.markdown(f"""
@@ -97,7 +120,6 @@ with tab3:
         - **Chakra**: {data["chakra"]}
         - **Rasa**: {data["rasa"]}
         """)
-
         if "scripture_quote" in data:
             with st.expander("📖 View Scripture Details"):
                 st.markdown(f"**Sanskrit:** {data['scripture_quote']}")
