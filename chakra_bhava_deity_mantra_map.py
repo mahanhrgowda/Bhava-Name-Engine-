@@ -1,80 +1,11 @@
-CHAKRA_BHAVA_DEITY_MANTRA_MAP = {
-  "Mūlādhāra": [
-    {
-      "bhava": "Vīraḥ (Heroism)",
-      "deity": "Hanumāna",
-      "tooltip": "Hanumāna is the ideal Vīra, fearless and loyal",
-      "source": "Rāmāyaṇa – Yuddha Kāṇḍa",
-      "mantra": "ॐ हनुमते नमः"
-    },
-    {
-      "bhava": "Dharma (Righteousness)",
-      "deity": "Yama",
-      "tooltip": "Yama embodies cosmic justice and moral law",
-      "source": "Manusmṛti, Mahābhārata",
-      "mantra": "ॐ यमाय नमः"
+
+def get_chakra_deity_map():
+    return {
+        "Muladhara": {"deity": "Ganesha", "mantra": "Om Gam Ganapataye Namaha"},
+        "Svadhisthana": {"deity": "Varuna", "mantra": "Om Vam Varunaya Namaha"},
+        "Manipura": {"deity": "Rama", "mantra": "Om Ram Ramaya Namaha"},
+        "Anahata": {"deity": "Krishna", "mantra": "Om Klim Krishnaya Namaha"},
+        "Vishuddha": {"deity": "Hanuman", "mantra": "Om Hum Hanumate Namaha"},
+        "Ajna": {"deity": "Shiva", "mantra": "Om Namah Shivaya"},
+        "Sahasrara": {"deity": "Devi", "mantra": "Om Aim Hreem Kleem Chamundaye Vichche"}
     }
-  ],
-  "Anāhata": [
-    {
-      "bhava": "Karunā (Compassion)",
-      "deity": "Lakṣmī",
-      "tooltip": "Lakṣmī is Karuṇārasa Sāgarā – ocean of compassion",
-      "source": "Lakṣmī Sahasranāma 134–137",
-      "mantra": "ॐ श्रीं महालक्ष्म्यै नमः"
-    },
-    {
-      "bhava": "Prema (Love)",
-      "deity": "Rādhā–Kṛṣṇa",
-      "tooltip": "Kṛṣṇa-rasa is the essence of divine love",
-      "source": "Bhāgavata Purāṇa 10.33",
-      "mantra": "ॐ राधा-कृष्णाय नमः"
-    }
-  ],
-  "Ājñā": [
-    {
-      "bhava": "Jñāna (Wisdom)",
-      "deity": "Dakṣiṇāmūrti",
-      "tooltip": "Dakṣiṇāmūrti teaches Jñāna through silence",
-      "source": "Guru Gītā, Kaivalya Upaniṣad",
-      "mantra": "ॐ दक्षिणामूर्तये नमः"
-    },
-    {
-      "bhava": "Medhā (Intellect)",
-      "deity": "Sarasvatī",
-      "tooltip": "Invoke Medhā Devi for brilliance and memory",
-      "source": "Medhā Sūktam",
-      "mantra": "ॐ ऐं ह्रीं क्लीं सरस्वत्यै नमः"
-    }
-  ],
-  "Sahasrāra": [
-    {
-      "bhava": "Bhaktiḥ (Devotion)",
-      "deity": "Viṣṇu",
-      "tooltip": "The highest Dharma is loving devotion to Viṣṇu",
-      "source": "Bhāgavata Purāṇa 1.2.6",
-      "mantra": "ॐ नमो भगवते वासुदेवाय"
-    },
-    {
-      "bhava": "Śāntiḥ (Peace)",
-      "deity": "Śiva",
-      "tooltip": "Peace arises in the mind fixed on the Divine",
-      "source": "Viṣṇu Purāṇa 1.9.118",
-      "mantra": "ॐ शान्तिः शान्तिः शान्तिः"
-    },
-    {
-      "bhava": "Mokṣa (Liberation)",
-      "deity": "Nārāyaṇa",
-      "tooltip": "Liberation is attained through devotion and grace",
-      "source": "Kaṭha Upaniṣad 2.3.14",
-      "mantra": "ॐ नमो नारायणाय"
-    },
-    {
-      "bhava": "Ānanda (Bliss)",
-      "deity": "Śiva (Natarāja)",
-      "tooltip": "ānando brahma – Bliss is the essence of Brahman",
-      "source": "Taittirīya Upaniṣad 2.7",
-      "mantra": "ॐ नमः शिवाय"
-    }
-  ]
-}
